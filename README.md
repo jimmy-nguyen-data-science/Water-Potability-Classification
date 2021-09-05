@@ -45,27 +45,23 @@ There are nine water quality metrics that describe the potability of a water sam
 
 
 ## Presentations and Reports
-* [Final Report](https://github.com/Jimmy-Nguyen-Data-Science-Portfolio/Heart-Disease-Detection/blob/main/Report/Project%20Report.pdf)
-* [Presentation Slides](https://github.com/Jimmy-Nguyen-Data-Science-Portfolio/Heart-Disease-Detection/blob/main/Presentation/Project%20Presentation.pdf)
-* [Python Code](https://github.com/Jimmy-Nguyen-Data-Science-Portfolio/Heart-Disease-Detection/blob/main/Code/Python%20Jupyter%20Notebook/Python%20Jupyter%20Notebook.pdf)
-* [R-programming Code](https://github.com/Jimmy-Nguyen-Data-Science-Portfolio/Heart-Disease-Detection/blob/main/Code/R%20code/Data%20Exploration%20-%20R.pdf)
+* [Final Report](https://github.com/Jimmy-Nguyen-Data-Science-Portfolio/Water-Potability-Classification/blob/main/Reports/Project%20Report.pdf)
+* [Presentation Slides](https://github.com/Jimmy-Nguyen-Data-Science-Portfolio/Water-Potability-Classification/blob/main/Presentations/Project%20Presentation.pdf)
+* [R-programming Code](https://github.com/Jimmy-Nguyen-Data-Science-Portfolio/Water-Potability-Classification/blob/main/Code/R%20Code/Project%20-%20R%20code.pdf)
 
 
 ## Data Visualizations
-![Age Groups](https://github.com/Jimmy-Nguyen-Data-Science-Portfolio/Heart-Disease-Detection/blob/main/Data%20Visuals/Age%20Groups.png)
+![Class Distribution](https://github.com/Jimmy-Nguyen-Data-Science-Portfolio/Water-Potability-Classification/blob/main/Data%20Visuals/Class%20Distributions.png)
 
-![Age Groups vs Resting Blood Pressure](https://github.com/Jimmy-Nguyen-Data-Science-Portfolio/Heart-Disease-Detection/blob/main/Data%20Visuals/Age%20Groups%20vs%20Resting%20Blood%20Pressure.png)
-
-![Sex vs Heart Disease](https://github.com/Jimmy-Nguyen-Data-Science-Portfolio/Heart-Disease-Detection/blob/main/Data%20Visuals/Sex%20vs.%20Heart%20Disease.png)
-
+![Correlation Matrix of Predictors](https://github.com/Jimmy-Nguyen-Data-Science-Portfolio/Water-Potability-Classification/blob/main/Data%20Visuals/Correlation%20Matrix%20of%20Predictors.png)
 
 ## Performance Results
 
-![Performance Table](https://github.com/Jimmy-Nguyen-Data-Science-Portfolio/Heart-Disease-Detection/blob/main/Data%20Visuals/Evaluation%20of%20Models.png)
+![ROC-AUC Curve of All Models](https://github.com/Jimmy-Nguyen-Data-Science-Portfolio/Water-Potability-Classification/blob/main/Data%20Visuals/ROC-AUC%20Curves%20for%20all%20Models.png)
 
-![k-Folds Cross-Validation Table](https://github.com/Jimmy-Nguyen-Data-Science-Portfolio/Heart-Disease-Detection/blob/main/Data%20Visuals/K-folds%20Cross%20Validation%20Table.png)
+![Average ROC-AUC Values](https://github.com/Jimmy-Nguyen-Data-Science-Portfolio/Water-Potability-Classification/blob/main/Data%20Visuals/Average%20ROC%20values.png)
 
-![ROC-AUC Curves](https://github.com/Jimmy-Nguyen-Data-Science-Portfolio/Heart-Disease-Detection/blob/main/Data%20Visuals/ROC%20AUC%20Curves.png)
+![Final Selected Models Test Performance](https://github.com/Jimmy-Nguyen-Data-Science-Portfolio/Water-Potability-Classification/blob/main/Data%20Visuals/Final%20Model%20Test%20Performance.png)
 
 
 ## Original Data 
@@ -88,14 +84,3 @@ https://www.kaggle.com/adityakadiwal/water-potability.
 Enderlein, U., Enderlein, R., and Williams W. Water Quality Requirements. WHO. Retrieved 28
 June 2021, from
 https://www.who.int/water_sanitation_health/resourcesquality/wpcchap2.pdf
-
-
-
-
-
-
-
-
-
-
-
