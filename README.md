@@ -25,6 +25,7 @@ One of the most basic human rights in life is to have access to a drinkable wate
 
 ### Technologies
 - R-programming
+- Shiny App (R)
 - Powerpoint
 - Word
 
@@ -48,7 +49,8 @@ There are nine water quality metrics that describe the potability of a water sam
 * [Final Report](https://github.com/Jimmy-Nguyen-Data-Science-Portfolio/Water-Potability-Classification/blob/main/Reports/Project%20Report.pdf)
 * [Presentation Slides](https://github.com/Jimmy-Nguyen-Data-Science-Portfolio/Water-Potability-Classification/blob/main/Presentations/Project%20Presentation.pdf)
 * [R-programming Code](https://github.com/Jimmy-Nguyen-Data-Science-Portfolio/Water-Potability-Classification/blob/main/Code/R%20Code/Project%20-%20R%20code.pdf)
-
+* [Shiny App](https://github.com/Jimmy-Nguyen-Data-Science-Portfolio/Water-Potability-Classification/tree/main/Code/Shiny%20App)
+* ![Shiny App Demo](https://github.com/Jimmy-Nguyen-Data-Science-Portfolio/Water-Potability-Classification/blob/main/Code/Shiny%20App/Demo.png)
 
 ## Data Visualizations
 ![Class Distribution](https://github.com/Jimmy-Nguyen-Data-Science-Portfolio/Water-Potability-Classification/blob/main/Data%20Visuals/Class%20Distributions.png)
