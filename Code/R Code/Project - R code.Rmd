@@ -1,0 +1,1059 @@
+---
+title: "ADS 503 - Final Project"
+author: "Jimmy Nguyen, Sarah Alqaysi, Sai Thiha"
+output:
+  pdf_document:
+    latex_engine: xelatex
+    toc: yes
+    toc_depth: 5
+  html_document:
+    toc: yes
+    toc_depth: '5'
+    df_print: paged
+---
+
+\newpage
+
+```{r, echo = FALSE, message=FALSE, warning=FALSE}
+library(tidyverse)
+library(mlbench)
+library(pander)
+library(e1071)
+library(Hmisc)
+library(caret)
+library(pander)
+library(kernlab)
+library(pROC)
+
+options(digits = 7)
+```
+
+# Data Set
+
+
+```{r, message= FALSE, warning=FALSE, echo=FALSE}
+df <- read_csv("water_potability.csv")
+
+df$Potability <- factor(sapply(df$Potability, function(x) {if (x == 0) return ("no") else return("yes")}), levels = c("no", "yes"))
+
+predictors <- df[,-c(10)]
+response <- data.frame(Potability = df$Potability)
+
+head(df) %>% pander(style = "grid", caption = "Water Potability Data Set")
+```
+
+
+
+
+
+## Data Set Total Number of Water Samples
+```{r, echo= FALSE, message=FALSE, warning=FALSE}
+data.frame("Total" = nrow(df)) %>% 
+  pander(style = "grid", caption = "Total Number of Water Samples")
+```
+
+## Data Set Total Number of Predictors
+```{r, echo= FALSE, message=FALSE, warning=FALSE}
+data.frame("Total" = ncol(predictors)) %>% 
+  pander(style = "grid", caption = "Total Number of Water Characteristics")
+```
+
+\newpage
+# Data Exploration
+
+## Class Distributions - Potability
+
+
+
+```{r, fig.align='center', fig.width= 4, fig.height=4, echo=FALSE, warning=FALSE, message=FALSE}
+
+ggplot(response, aes(x=Potability, fill=Potability)) + 
+  geom_bar(color ="black") +
+  scale_fill_manual(values=c( "#404080", "#69b3a2")) +
+  theme(legend.position="none") + theme_bw() + 
+  theme(panel.spacing = unit(1.5, "lines"),
+        legend.title = element_blank(),
+        legend.position = "none",
+        strip.text.x = element_text(size = 10, colour = "black"),
+        strip.text.y = element_text(size = 10, colour = "black"),
+        plot.title = element_text(size = 10),
+        axis.title = element_text(size = 10),
+        axis.text = element_text(colour = "black", size = 10))+
+  labs(title = "Class Distribution - Potability",
+       x = "Potability of Water", y = "Frequency") 
+```
+## Class Proportions
+
+```{r}
+pota<- table(df$Potability)
+round(prop.table(pota), digits = 3) %>% pander(style = "grid", 
+         caption = "Class Proportions")
+
+```
+
+**Findings**
+- The potability class (1) contain 39% of the data set, while the non-potability class (0) contain 61% of the data.
+
+
+
+\newpage
+
+## Correlation Matrix of Predictors
+
+```{r, warning=FALSE, message=FALSE, fig.align='left', fig.height =15, fig.width= 15, echo=FALSE}
+library(corrplot)
+
+correlations <- cor(predictors[complete.cases(predictors),]) 
+corrplot(correlations, method = "shade",
+        addgrid.col = "grey", type = "lower",
+         tl.cex = 1)
+```
+
+Degree of correlation:
+
+- Perfect: If the value is near ± 1, then it said to be a perfect correlation: as one variable increases, the other variable tends to also increase (if positive) or decrease (if negative).
+- High degree: If the coefficient value lies between ± 0.50 and ± 1, then it is said to be a strong correlation.
+- Moderate degree: If the value lies between ± 0.30 and ± 0.49, then it is said to be a medium correlation.
+- Low degree: When the value lies below + .29, then it is said to be a small correlation.
+- No correlation: When the value is zero.
+
+
+\newpage
+## Frequency Distribution of Predictors:
+
+```{r, fig.align='center', fig.width=11, fig.height=8, echo=FALSE}
+
+
+ggplot(gather(predictors[complete.cases(predictors),]), 
+       aes(value)) + 
+  geom_histogram(aes(fill = key),
+               binwidth = function(x) 2 * IQR(x) / (length(x)^(1/3)),
+                 colour = "black",
+                 show.legend = FALSE) +
+  facet_wrap(~key, scales = 'free_x') + theme_bw() + 
+  theme(panel.spacing = unit(1, "lines"),
+        strip.text.x = element_text(size = 12, colour = "black"),
+        plot.title = element_text(size = 12),
+        axis.title = element_text(size = 12),
+        axis.text = element_text(colour = "black", size = 12)) +
+  labs(title = "Frequency Distributions of Predictors",
+       x = "Predictors", y = "Frequency") 
+
+```
+
+```{r, echo=FALSE}
+library(e1071)
+
+skewValues <- apply(predictors[complete.cases(predictors),], 2, skewness)
+skewValues %>% pander(style = "grid", 
+         caption = "Skewness of Predictors")
+```
+
+The rule of thumb seems to be: If the skewness is between -0.5 and 0.5, the data are fairly symmetrical. If the skewness is between -1 and – 0.5 or between 0.5 and 1, the data are moderately skewed. If the skewness is less than -1 or greater than 1, the data are highly skewed.
+
+
+\newpage
+## Frequency Distribution of Predictors with Response Overlaid:
+```{r, fig.align='center', fig.width=11, fig.height=8, echo=FALSE, message=FALSE, warning=FALSE}
+library(reshape2)
+dist_df <- melt(df)
+
+ggplot(dist_df[complete.cases(dist_df),], aes(value)) + 
+  geom_histogram(aes(fill = Potability, color = Potability),
+               binwidth = function(x) 2 * IQR(x) / (length(x)^(1/3)),
+                 colour = "black",
+                position = "identity", alpha = 0.85,
+                 show.legend = TRUE) +
+  scale_fill_manual(values=c( "#404080", "#69b3a2")) +
+  facet_wrap(~variable, scales = 'free_x') + theme_bw() + 
+  theme(panel.spacing = unit(1.5, "lines"),
+        strip.text.x = element_text(size = 10, colour = "black"),
+        strip.text.y = element_text(size = 10, colour = "black"),
+        plot.title = element_text(size = 12),
+        axis.title = element_text(size = 12),
+        axis.text = element_text(colour = "black", size = 10))+
+  labs(title = "Frequency Distributions of Predictors",
+       x = "Predictors", y = "Frequency") 
+```
+
+
+# Data Pre-processing
+
+## Zero-Variance Predictors :
+```{r}
+nearZeroVar(predictors[complete.cases(predictors),])
+```
+There are no predictors with degenerate distributions.
+
+
+
+## Remove Highly Correlated Predictors : 
+
+
+```{r}
+correlations <- cor(predictors[complete.cases(predictors),])
+highCorr <- findCorrelation(correlations, cutoff = .75)
+length(highCorr)
+```
+
+There are no predictors with high collinearity with each other using a cut-off point of 0.75.
+
+
+\newpage
+## Check for Missing Values : 
+
+
+```{r, fig.align='center', fig.width= 5, fig.height= 5, message=FALSE, warning=FALSE, echo=FALSE}
+na_df <- data.frame(Potability = df[!complete.cases(df),"Potability"]) 
+
+ggplot(na_df) + 
+  geom_bar(mapping = aes(Potability, y = sort(..prop..), 
+                         group = 1), stat = "count",
+           fill = c("#404080", "#69b3a2"),
+           colour = "black") +
+  scale_y_continuous(labels = scales::percent_format()) +
+  theme_bw() + 
+  theme(panel.spacing = unit(1.5, "lines"),
+        strip.text.x = element_text(size = 10, colour = "black"),
+        strip.text.y = element_text(size = 10, colour = "black"),
+        plot.title = element_text(size = 12),
+        axis.title = element_text(size = 12),
+        axis.text = element_text(colour = "black", size = 10)) +
+  labs(title = "Proportions of Classes with Missing Values in Predictors",
+       x = "Classes with missing Values", y = "Proportions") 
+```
+
+```{r, echo = FALSE, message=FALSE, warning=FALSE}
+
+missing_df <- data.frame("Total Missing Values" = (sapply(df, 
+                                                      function(x) sum(is.na(x)))))  
+missing_df <- cbind(Columns = rownames(missing_df), missing_df)
+rownames(missing_df) <- 1:nrow(missing_df)
+missing_df %>% arrange(desc(Total.Missing.Values)) %>%
+  pander(style = "grid", caption = "Missing Values by Columns")
+
+```
+```{r, echo= FALSE, message=FALSE, warning=FALSE}
+data.frame("Total" = sum(sapply(df, function(x) sum(is.na(x))))) %>% 
+  pander(style = "grid", caption = "Total Missing Values")
+```
+
+
+## Strategies to deal with Missing Values:
+
+1. Replace the missing value with some constant pre-specified.
+2. Replace the missing value with the mean/median of the predictor. 
+3. Replace the missing values with a value generated at random from the observed distribution of each predictor.
+4. **The best method:** replace the missing values with imputated values based on the other characteristics of the record. 
+Thus, a K-nearest neighbors and choosing the optimal number of neighbors as the tuning parameter. 
+
+However, imputation will not guarantee a better signal in the modeling process, since such techniques has uncertainty and bias. Also, this data set has a lot of missing values, this means that nearly every predictor would need to go through this imputation modeling technique. This is mainly because _class 1 (Potability)_  is associated with high rates of missing values.
+
+## K-NN Imputation on Missing Values:
+
+```{r}
+library(RANN)
+impute <- preProcess(as.matrix(predictors), method = c("center", "scale", "knnImpute"))
+predictors <- predict(impute, predictors)
+
+```
+
+
+```{r, echo=FALSE}
+data.frame("Total" = sum(sapply(predictors, function(x) sum(is.na(x))))) %>% 
+  pander(style = "grid", caption = "Imputated Predictors - Total Missing Values")
+```
+
+ 
+# Data Splitting
+
+```{r}
+# Stratified Random Sampling
+set.seed(1)
+trainingRows <- createDataPartition(response$Potability, p = .80, list = FALSE)
+
+# training set
+train <- predictors[trainingRows,]
+train_class <- response[trainingRows,]
+
+# test set
+test <- predictors[-trainingRows,]
+test_class <- response[-trainingRows,]
+
+#resampling method
+ctrl <- trainControl(summaryFunction = twoClassSummary, 
+                     classProbs = TRUE, savePredictions = TRUE,
+                     method = "repeatedcv", repeats = 5)
+```
+
+
+\newpage
+## Verify Data Partitions
+
+```{r, echo=FALSE}
+
+splits <- c("Train Split", "Test Split")
+splits_perc <- round(c((nrow(train) / nrow(df)), (nrow(test)/ nrow(df))),3)
+splits_df <- data.frame("Partitions" = splits,
+                        "Proportions" = splits_perc)
+
+splits_df %>% pander(style = "grid", caption = "Data Split Proportions")
+
+```
+
+# Modeling
+
+## Get Model information 
+```{r}
+get_model_info <- function (model, set, set_class) {
+  model_pred <-predict(model, set, type = "prob")
+
+  model_df <- data.frame(pred = predict(model, set),
+                           obs = set_class,
+                           "yes"= model_pred[,"yes"],
+                           "no" = model_pred[,"no"])
+  return (model_df)}
+```
+
+
+
+## Get ROC curve 
+
+```{r}
+get_roc <- function(model_df) {
+
+  model_roc <- roc(response = model_df$obs,
+                     predictor = model_df$yes,
+                     levels = rev(levels(model_df$obs)))
+  return (model_roc)}
+```
+
+
+
+## Get Performance Metrics (AUC, Sensitivity, Specificity)
+
+```{r}
+get_auc <- function(model_roc, model_df, set_class) {
+
+  model_auc <- auc(model_roc)
+  # yes will be used as the event of interests
+  model_sens <- sensitivity(data = model_df$pred,
+                              reference = set_class,
+                              positive = "yes")
+
+  model_spec <- specificity(data = model_df$pred,
+                              reference = set_class,
+                              negative = "no")
+
+
+  metrics <- c("Area Under Curve", "Sensitivity", "Specificity")
+  performance <- c(model_auc, model_sens, model_spec)
+
+  model_results <- data.frame("Performance" = metrics, model = performance)
+  return (model_results)}
+```
+
+
+\newpage
+
+## Linear Discriminant Analysis
+```{r, message=FALSE, warning=FALSE, eval=FALSE}
+set.seed(476)
+water_lda <- train(train, 
+                y = train_class,
+                method = "lda", 
+                metric = "ROC",
+                preProc = c("center", "scale"),
+                trControl = ctrl,
+                trace =  FALSE)
+
+
+saveRDS(water_lda, "water_lda.rds")
+```
+
+```{r, warning=FALSE, message=FALSE}
+water_lda <- readRDS("water_lda.rds")
+lda_df <- get_model_info(water_lda, train, train_class)
+lda_roc <- get_roc(lda_df)
+lda_results <- get_auc(lda_roc, lda_df, train_class)
+```
+
+```{r, echo=FALSE, fig.align='center', fig.height=5, fig.width=6, warning=FALSE, message=FALSE}
+plot(lda_roc, legacy.axes = TRUE, print.auc = TRUE,
+     main = "Linear Discriminant Analysis Model
+     Train-set ROC-AUC")
+```
+
+
+\newpage
+
+```{r, echo=FALSE}
+table(lda_df$obs, lda_df$pred) %>% 
+  pander(style = "grid", caption = "LDA Model - Confusion Matrix")
+```
+
+
+```{r, echo=FALSE}
+lda_results %>% pander(style = "grid", caption = "LDA Model - Training Results")
+```
+
+
+\newpage
+## Mixed Discriminant Analysis Model
+
+
+```{r, eval=FALSE, warning=FALSE, message=FALSE}
+set.seed(476)
+water_mda <- train(x = train, 
+                y = train_class, 
+                method = "mda", 
+                metric = "ROC",
+                tuneGrid = expand.grid(.subclasses = 1:8),
+                trControl = ctrl)
+
+saveRDS(water_mda, "water_mda.rds")
+```
+
+```{r, warning=FALSE, message=FALSE}
+water_mda <- readRDS("water_mda.rds")
+mda_df <- get_model_info(water_mda, train, train_class)
+mda_roc <- get_roc(mda_df)
+mda_results <- get_auc(mda_roc, mda_df, train_class)
+```
+
+```{r, echo=FALSE, fig.align='center', fig.height=5, fig.width=6, warning=FALSE, message=FALSE}
+plot(mda_roc, legacy.axes = TRUE, print.auc = TRUE,
+     main = "Mixed Discriminant Analysis Model
+     Train-set ROC-AUC")
+```
+
+
+\newpage
+
+```{r, echo=FALSE}
+table(mda_df$obs, mda_df$pred) %>% 
+  pander(style = "grid", caption = "MDA Model - Confusion Matrix")
+```
+
+```{r, echo=FALSE}
+mda_results %>% pander(style = "grid", caption = "Mixed Determinant Analysis Model - Training Results")
+```
+
+
+\newpage
+## Neural Networks 
+
+```{r, eval=FALSE, warning=FALSE, message=FALSE}
+
+nnetGrid <- expand.grid(.size = 1:10, 
+                         .decay = c(0, .1, 1, 2))
+maxSize <- max(nnetGrid$.size)
+numWts <- 1*(maxSize * (length(train) + 1) + maxSize + 1)
+
+
+water_nnet <- train(train, train_class, method = "nnet",metric = "ROC", 
+                  preProc = c("center", "scale", "spatialSign"),
+                  tuneGrid = nnetGrid, trace = FALSE, 
+                  maxit = 2000, MaxNWts = numWts, trControl = ctrl)
+
+saveRDS(water_nnet, "water_nnet.rds")
+```
+
+
+
+```{r, warning=FALSE, message=FALSE}
+water_nnet <- readRDS("water_nnet.rds")
+nnet_df <- get_model_info(water_nnet, train, train_class)
+nnet_roc <- get_roc(nnet_df)
+nnet_results <- get_auc(nnet_roc, nnet_df, train_class)
+```
+
+
+```{r, echo=FALSE, fig.align='center', fig.height=5, fig.width=6, warning=FALSE, message=FALSE}
+plot(nnet_roc, legacy.axes = TRUE, print.auc = TRUE,
+     main = "Neural Networks Model
+     Train-set ROC-AUC")
+```
+
+
+\newpage
+
+```{r, echo=FALSE}
+table(nnet_df$obs, nnet_df$pred) %>% 
+  pander(style = "grid", caption = "Neural Networks Model - Confusion Matrix")
+```
+
+
+```{r, echo=FALSE}
+nnet_results %>% pander(style = "grid", caption = "Neural Networks Model - Training Results")
+```
+
+
+\newpage
+## K-NN
+
+````{r, eval=FALSE, warning=FALSE, message=FALSE}
+set.seed(476)
+water_knn <- train(x = train, 
+                   y = train_class, 
+                   method = "knn", 
+                   metric = "ROC",
+                   tuneLength = 10,
+                   preProc = c("center", "scale"),
+                   trControl = ctrl)
+
+saveRDS(water_knn, "water_knn.rds")
+```
+
+
+```{r, warning=FALSE, message=FALSE}
+water_knn <- readRDS("water_knn.rds")
+knn_df <- get_model_info(water_knn, train, train_class)
+knn_roc <- get_roc(knn_df)
+knn_results <- get_auc(knn_roc, knn_df, train_class)
+```
+
+```{r, echo=FALSE, fig.align='center', fig.height=5, fig.width=6, warning=FALSE, message=FALSE}
+plot(knn_roc, legacy.axes = TRUE, print.auc = TRUE,
+     main = "K-Nearest Neighbors Model
+     Train-set ROC-AUC")
+```
+
+
+\newpage
+
+```{r, echo=FALSE}
+table(knn_df$obs, knn_df$pred) %>% 
+  pander(style = "grid", caption = "KNN Model - Confusion Matrix")
+```
+
+```{r, echo=FALSE}
+knn_results %>% pander(style = "grid", caption = "K-Nearest Neighbors Model - Training Results")
+```
+
+\newpage
+## Naive-Bayes Model
+
+```{r, eval=FALSE, warning=FALSE, message=FALSE}
+set.seed(476)
+water_nb <- train(x = train, 
+                   y = train_class, 
+                   method = "nb", 
+                   preProc = c("center", "scale"),
+                   metric = "ROC",
+                   trControl = ctrl)
+
+saveRDS(water_nb, "water_nb.rds")
+```
+
+```{r, warning=FALSE, message=FALSE}
+water_nb <- readRDS("water_nb.rds")
+nb_df <- get_model_info(water_nb, train, train_class)
+nb_roc <- get_roc(nb_df)
+nb_results <- get_auc(nb_roc, nb_df, train_class)
+```
+
+```{r, echo=FALSE, fig.align='center', fig.height=5, fig.width=6, warning=FALSE, message=FALSE}
+plot(nb_roc, legacy.axes = TRUE, print.auc = TRUE,
+     main = "Naive Bayes Model
+     Train-set ROC-AUC")
+```
+
+
+\newpage
+
+```{r, echo=FALSE}
+table(nb_df$obs, nb_df$pred) %>% 
+  pander(style = "grid", caption = "Naive Bayes Model - Confusion Matrix")
+```
+
+```{r, echo=FALSE}
+nb_results %>% pander(style = "grid", caption = "Naive Bayes Model - Training Results")
+```
+
+\newpage
+## SVM-Radial Function
+
+```{r, warning=FALSE, message=FALSE, eval=FALSE}
+
+set.seed(476)
+
+sigmaRangeReduced <- sigest(as.matrix(train))
+svmRGridReduced <- expand.grid(.sigma = sigmaRangeReduced[1], .C = 2^(seq(-4, 4)))
+
+water_svm <- train(train, train_class, method = "svmRadial", 
+                   metric = "ROC",
+                   preProc = c("center", "scale"),
+                   tuneGrid = svmRGridReduced,
+                   fit = FALSE,
+                   trControl = ctrl)
+
+saveRDS(water_svm, "water_svm.rds")
+```
+
+
+```{r, warning=FALSE, message=FALSE}
+water_svm <- readRDS("water_svm.rds")
+svm_df <- get_model_info(water_svm, train, train_class)
+svm_roc <- get_roc(svm_df)
+svm_results <- get_auc(svm_roc, svm_df, train_class)
+```
+
+```{r, echo=FALSE, fig.align='center', fig.height=5, fig.width=6, warning=FALSE, message=FALSE}
+plot(svm_roc, legacy.axes = TRUE, print.auc = TRUE,
+     main = "SVM - Radial Function
+     Train-set ROC-AUC")
+```
+
+
+\newpage
+
+```{r, echo=FALSE}
+table(svm_df$obs, svm_df$pred) %>% 
+  pander(style = "grid", caption = "SVM Radial Function - Confusion Matrix")
+```
+
+
+```{r, echo=FALSE}
+svm_results %>% pander(style = "grid", caption = "SVM Radial Function - Training Results")
+```
+
+\newpage
+## PLS Model
+
+```{r, eval=FALSE, message=FALSE, warning=FALSE}
+set.seed(476)
+
+water_pls <- train(x = train, train_class,
+                  method = "pls",
+                  metric = "ROC",
+                  preProc = c("center", "scale"),
+                  tuneLength = 15,
+                  trControl = ctrl)
+saveRDS(water_pls, "water_pls.rds")
+```
+
+```{r, warning=FALSE, message=FALSE}
+water_pls <- readRDS("water_pls.rds")
+pls_df <- get_model_info(water_pls, train, train_class)
+pls_roc <- get_roc(pls_df)
+pls_results <- get_auc(pls_roc, pls_df, train_class)
+```
+
+```{r, echo=FALSE, fig.align='center', fig.height=5, fig.width=6, warning=FALSE, message=FALSE}
+plot(pls_roc, legacy.axes = TRUE, print.auc = TRUE,
+     main = "PLS Model
+     Train-set ROC-AUC")
+```
+
+
+\newpage
+
+```{r, echo=FALSE}
+table(pls_df$obs, pls_df$pred) %>% 
+  pander(style = "grid", caption = "PLS Model - Confusion Matrix")
+```
+
+```{r, echo=FALSE}
+pls_results %>% pander(style = "grid", caption = "PLS Model - Training Results")
+```
+
+
+\newpage
+## MARS
+
+```{r, eval=FALSE, message=FALSE, warning=FALSE}
+set.seed(476)
+
+water_mars <- train(x = train, train_class,
+                  method = "earth",
+                  metric = "ROC",
+                  tuneGrid = expand.grid(.degree = 1,
+                                         .nprune = 2:25),
+                  trControl = ctrl)
+saveRDS(water_mars, "water_mars.rds")
+```
+
+```{r, warning=FALSE, message=FALSE}
+water_mars <- readRDS("water_mars.rds")
+mars_df <- get_model_info(water_mars, train, train_class)
+mars_roc <- get_roc(mars_df)
+mars_results <- get_auc(mars_roc, mars_df, train_class)
+```
+
+```{r, echo=FALSE, fig.align='center', fig.height=5, fig.width=6, warning=FALSE, message=FALSE}
+plot(mars_roc, legacy.axes = TRUE, print.auc = TRUE,
+     main = "MARS Model
+     Train-set ROC-AUC")
+```
+
+
+\newpage
+
+```{r, echo=FALSE}
+table(mars_df$obs, mars_df$pred) %>% 
+  pander(style = "grid", caption = "MARS Model - Confusion Matrix")
+```
+
+```{r, echo=FALSE}
+mars_results %>% pander(style = "grid", caption = "MARS Model - Training Results")
+```
+
+
+
+\newpage
+## Nearest Shrunken Centroids
+
+```{r, eval=FALSE, message=FALSE, warning=FALSE}
+set.seed(476)
+
+water_nsc <- train(x = train, train_class,
+                  method = "pam",
+                  metric = "ROC",
+                  preProc = c("center", "scale"),
+                  tuneGrid = data.frame(.threshold = 0:25),
+                  trControl = ctrl)
+saveRDS(water_nsc, "water_nsc.rds")
+```
+
+```{r, warning=FALSE, message=FALSE}
+water_nsc <- readRDS("water_nsc.rds")
+nsc_df <- get_model_info(water_nsc, train, train_class)
+nsc_roc <- get_roc(nsc_df)
+nsc_results <- get_auc(nsc_roc, nsc_df, train_class)
+```
+
+```{r, echo=FALSE, fig.align='center', fig.height=5, fig.width=6, warning=FALSE, message=FALSE}
+plot(nsc_roc, legacy.axes = TRUE, print.auc = TRUE,
+     main = "Nearest Shrunken Centroids
+     Train-set ROC-AUC")
+```
+
+
+\newpage
+
+```{r, echo=FALSE}
+table(nsc_df$obs, nsc_df$pred) %>% 
+  pander(style = "grid", caption = "Nearest Shrunken Centroids - Confusion Matrix")
+```
+
+```{r, echo=FALSE}
+nsc_results %>% pander(style = "grid", caption = "Nearest Shrunken Centroids - Training Results")
+```
+
+
+\newpage
+## Logistic Regression 
+
+
+```{r, eval=FALSE, message=FALSE, warning=FALSE}
+set.seed(476)
+
+water_log <- train(x = train, train_class,
+                  method = "glm",
+                  metric = "ROC",
+                  trControl = ctrl)
+saveRDS(water_log, "water_log.rds")
+```
+
+
+```{r, warning=FALSE, message=FALSE}
+water_log <- readRDS("water_log.rds")
+log_df <- get_model_info(water_log, train, train_class)
+log_roc <- get_roc(log_df)
+log_results <- get_auc(log_roc, log_df, train_class)
+```
+
+```{r, echo=FALSE, fig.align='center', fig.height=5, fig.width=6, warning=FALSE, message=FALSE}
+plot(log_roc, legacy.axes = TRUE, print.auc = TRUE,
+     main = "Logistic Regression
+     Train-set ROC-AUC")
+```
+
+
+\newpage
+
+```{r, echo=FALSE}
+table(log_df$obs, log_df$pred) %>% 
+  pander(style = "grid", caption = "Logistic Regression - Confusion Matrix")
+```
+
+```{r, echo=FALSE}
+log_results %>% pander(style = "grid", caption = "Logistic Regression - Training Results")
+```
+
+
+\newpage
+## All Models ROC-AUC curve: 
+
+```{r, fig.align='center', fig.width=7, fig.height=5, echo=FALSE, }
+library(pROC)
+ggroc(list("Linear Discriminant Analysis" = lda_roc,
+           "Mixed Discriminant Analysis" = mda_roc,
+           " Neural Networks" = nnet_roc,
+           "K-Nearest Neighbors" = knn_roc,
+           "Naive Bayesian" = nb_roc,
+           "SVM - Radial Function" = svm_roc,
+           "Partial Least Squares" = pls_roc,
+           "MARS" = mars_roc,
+           "Nearest Shrunken Centroids" = nsc_roc,
+           "Logistic Regression" = log_roc)) + 
+  theme(panel.spacing = unit(1, "lines"),
+        strip.text.x = element_text(size = 12, colour = "black"),
+        plot.title = element_text(size = 12),
+        axis.title = element_text(size = 12),
+        axis.text = element_text(colour = "black", size = 12)) +
+  labs(title = "ROC-AUC for All Models - Training Sets", y = "Specificity",
+       x = "1 - Specificity") 
+```
+
+
+
+## All Models AUC Values: 
+```{r, echo=FALSE}
+
+models<- c("Linear Discriminant Analysis",
+           "Mixed Discriminant Analysis",
+           "Neural Networks", 
+           "K-Nearest Neighbors", "Naive Bayes",
+           "SVM - Radial Function", 
+           "Partial Least Squares",
+           "MARS",
+           "Nearest Shrunken Centroids",
+           "Logistic Regression")
+
+auc <- c(lda_roc$auc[1],
+                     mda_roc$auc[1],
+                     nnet_roc$auc[1],
+                     knn_roc$auc[1],
+                     nb_roc$auc[1],
+                     svm_roc$auc[1],
+                     pls_roc$auc[1],
+                     mars_roc$auc[1],
+                     nsc_roc$auc[1],
+                     log_roc$auc[1])
+
+
+sens <- c(lda_results$model[2],
+          mda_results$model[2],
+          nnet_results$model[2],
+          knn_results$model[2],
+          nb_results$model[2],
+          svm_results$model[2],
+          pls_results$model[2],
+          mars_results$model[2],
+          nsc_results$model[2],
+          log_results$model[2])
+
+
+spec <- c(lda_results$model[3],
+          mda_results$model[3],
+          nnet_results$model[3],
+          knn_results$model[3],
+          nb_results$model[3],
+          svm_results$model[3],
+          pls_results$model[3],
+          mars_results$model[3],
+          nsc_results$model[3],
+          log_results$model[3])
+
+
+final_df <- data.frame("Models" = models, "AUC" = auc, 
+                       "Sensitivity" = sens,
+                       "Specificity" = spec)
+
+final_df %>%
+  pander(style = "grid", caption = "All Models (Training Set) - AUC")
+
+```
+
+\newpage
+
+## Resampled ROC values
+
+```{r, echo=FALSE, fig.align='center', fig.height=5, fig.width=6, warning=FALSE, message=FALSE}
+allResamples <- resamples(list("Linear Discriminant Analysis" = water_lda ,
+           "Mixed Discriminant Analysis" = water_mda,
+           "Neural Networks" = water_nnet, 
+           "K-Nearest Neighbors" = water_knn, 
+           "Naive Bayes" = water_nb,
+           "SVM - Radial Function" = water_svm, 
+           "Partial Least Squares" = water_pls,
+           "MARS" = water_mars,
+           "Nearest Shrunken Centroids" = water_nsc,
+           "Logistic Regression" = water_log))
+
+parallelplot(allResamples, metric = "ROC")
+```
+
+
+```{r, echo=FALSE, fig.align='center', fig.width=7, fig.height=4}
+dotplot(allResamples, metric = "ROC")
+```
+
+
+# Results
+
+## SVM Radial Function - Best Tuning Parameters
+```{r, echo=FALSE}
+plot(water_svm, main = "5 Repeats 10-folds CV ROC scores by Costs")
+water_svm$bestTune %>%
+  pander(style = "grid", caption = "Best Tuning Parameter based on ROC values")
+
+```
+
+## Neural Networks - Best Tuning Parameters 
+
+```{r, echo=FALSE}
+plot(water_nnet, main = "5 Repeats 10-folds CV ROC scores by Hidden Units and Weights")
+water_nnet$bestTune %>%
+  pander(style = "grid", caption = "Best Tuning Parameter based on ROC values")
+
+```
+
+
+\newpage
+
+## Resampled Confusion Matrix (Training Set) - SVM vs. Neural Networks
+
+
+
+```{r, echo=FALSE, fig.align='center', fig.width=7, fig.height=5}
+
+draw_confusion_matrix <- function(cm, model_name) {
+
+  layout(matrix(c(1,1,2)))
+  par(mar=c(2,2,2,2))
+  plot(c(100, 345), c(300, 450), type = "n", xlab="", ylab="", xaxt='n', yaxt='n')
+  title(paste0(model_name, ' Resampled Confusion Matrix'), cex.main=2)
+
+  # create the matrix 
+  rect(150, 430, 240, 370, col='#3F97D0')
+  text(195, 435, 'No', cex=1.2)
+  rect(250, 430, 340, 370, col='#F7AD50')
+  text(295, 435, 'Yes', cex=1.2)
+  text(125, 370, 'Predicted', cex=1.3, srt=90, font=2)
+  text(245, 450, 'Actual', cex=1.3, font=2)
+  rect(150, 305, 240, 365, col='#F7AD50')
+  rect(250, 305, 340, 365, col='#3F97D0')
+  text(140, 400, 'No', cex=1.2, srt=90)
+  text(140, 335, 'Yes', cex=1.2, srt=90)
+
+  # add in the cm results 
+  res <- as.numeric(cm$table)
+  text(195, 400, round(res[1],2), cex=1.6, font=5, col='white')
+  text(195, 335, round(res[2],2), cex=1.6, font=5, col='white')
+  text(295, 400, round(res[3],2), cex=1.6, font=5, col='white')
+  text(295, 335, round(res[4],2), cex=1.6, font=5, col='white')
+}  
+
+svm_cm <- confusionMatrix(water_svm, norm = "overall")
+nnet_cm <- confusionMatrix(water_nnet, norm = "overall")
+```
+
+
+```{r, echo=FALSE}
+draw_confusion_matrix(svm_cm, "SVM - Radial Function")
+```
+
+
+
+
+```{r}
+draw_confusion_matrix(nnet_cm, "Neural Networks")
+```
+
+\newpage
+
+## Test Sets - SVM vs. Neural Networks
+
+
+```{r, warning=FALSE, message=FALSE}
+svm_test_df <- get_model_info(water_svm, test, test_class)
+svm_test_roc <- get_roc(svm_test_df)
+svm_test_results <- get_auc(svm_test_roc, svm_test_df, test_class)
+```
+
+
+
+```{r, warning=FALSE, message=FALSE}
+nnet_test_df <- get_model_info(water_nnet, test, test_class)
+nnet_test_roc <- get_roc(nnet_test_df)
+nnet_test_results <- get_auc(nnet_test_roc, nnet_test_df, test_class)
+```
+
+
+
+## Final Models Test Set Performance
+
+```{r, echo=FALSE, fig.align='center', fig.height=5, fig.width=6, warning=FALSE, message=FALSE}
+plot(svm_test_roc, legacy.axes = TRUE,
+     main = "SVM vs. Neural Nets
+     Test-set ROC-AUC")
+lines(svm_test_roc, col  = "red")
+text(0.9, .67, labels=sprintf("SVM AUC: %0.3f", auc(svm_test_roc)), col="red")
+
+plot(nnet_test_roc, legacy.axes = TRUE,
+     add = TRUE)
+lines(nnet_test_roc, col  = "blue")
+text(0.05, .67, labels=sprintf("N-Nets AUC: %0.3f", auc(nnet_test_roc)), col="blue")
+```
+
+\newpage
+
+```{r, echo=FALSE, fig.align='center', fig.width=7, fig.height=5}
+
+draw_confusion_matrix2 <- function(cm, model_name) {
+
+  layout(matrix(c(1,1,2)))
+  par(mar=c(2,2,2,2))
+  plot(c(100, 345), c(300, 450), type = "n", xlab="", ylab="", xaxt='n', yaxt='n')
+  title(paste0(model_name, ' Test Set Confusion Matrix'), cex.main=2)
+
+  # create the matrix 
+  rect(150, 430, 240, 370, col='#3F97D0')
+  text(195, 435, 'No', cex=1.2)
+  rect(250, 430, 340, 370, col='#F7AD50')
+  text(295, 435, 'Yes', cex=1.2)
+  text(125, 370, 'Predicted', cex=1.3, srt=90, font=2)
+  text(245, 450, 'Actual', cex=1.3, font=2)
+  rect(150, 305, 240, 365, col='#F7AD50')
+  rect(250, 305, 340, 365, col='#3F97D0')
+  text(140, 400, 'No', cex=1.2, srt=90)
+  text(140, 335, 'Yes', cex=1.2, srt=90)
+
+  # add in the cm results 
+  res <- as.numeric(cm$table)
+  text(195, 400, round(res[1],2), cex=1.6, font=5, col='white')
+  text(195, 335, round(res[2],2), cex=1.6, font=5, col='white')
+  text(295, 400, round(res[3],2), cex=1.6, font=5, col='white')
+  text(295, 335, round(res[4],2), cex=1.6, font=5, col='white')
+}  
+
+```
+
+
+```{r, echo=FALSE, fig.align='center', fig.height=5, fig.width=6, warning=FALSE, message=FALSE}
+svm_test_cm <- confusionMatrix(data = svm_test_df$pred, 
+                               reference = svm_test_df$obs)
+draw_confusion_matrix2(svm_test_cm, "SVM Radial Function - ")
+```
+
+```{r, echo=FALSE}
+svm_test_results  %>%
+  pander(style = "grid", caption = "SVM - Test Set Performance")
+```
+
+
+```{r, echo=FALSE, fig.align='center', fig.height=5, fig.width=6, warning=FALSE, message=FALSE}
+nnet_test_cm <- confusionMatrix(data = nnet_test_df$pred, 
+                               reference = nnet_test_df$obs)
+draw_confusion_matrix2(nnet_test_cm, "Neural Networks - ")
+```
+
+```{r, echo=FALSE}
+nnet_test_results %>%
+  pander(style = "grid", caption = "N-Nets - Test Set Performance")
+```
+
+
