@@ -52,7 +52,7 @@ There are nine water quality metrics that describe the potability of a water sam
 * [Shiny App](https://github.com/Jimmy-Nguyen-Data-Science-Portfolio/Water-Potability-Classification/tree/main/Code/Shiny%20App)
 
 
-**Demo**
+**Shiny Web App Demo - New Data Predictions**
 ![Shiny App Demo](https://github.com/Jimmy-Nguyen-Data-Science-Portfolio/Water-Potability-Classification/blob/main/Code/Shiny%20App/Demo.png)
 
 ## Data Visualizations
