@@ -2,7 +2,8 @@
 
 ## Completed: 28 June 2021 
 
-## Collaborators 
+## Collaborators
+- Jimmy Nguyen 
 - Sarah Alqaysi
 - Sai Thiha
 
