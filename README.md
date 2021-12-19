@@ -2,8 +2,9 @@
 
 ## Completed: 28 June 2021 
 
-## Collaborators
-- Jimmy Nguyen 
+
+## Authors and Collaborators
+- [Jimmy Nguyen](https://github.com/jimmy-nguyen-data-science)
 - Sarah Alqaysi
 - Sai Thiha
 
