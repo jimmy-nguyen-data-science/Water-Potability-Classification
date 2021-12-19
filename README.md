@@ -7,6 +7,16 @@
 - Sarah Alqaysi
 - Sai Thiha
 
+
+## Installation
+
+All data analysis and modeling was all done in [R-studio](https://www.rstudio.com/).
+
+To clone this repository onto your device, use the commands below:
+
+	1. git init
+	2. git clone git@github.com:jimmy-nguyen-data-science/Water-Potability-Classification.git
+
 ## Project Objective
 The goal of this project is to classify the safety and quality of drinkable water.
 
