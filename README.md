@@ -58,27 +58,27 @@ There are nine water quality metrics that describe the potability of a water sam
 
 
 ## Presentations and Reports
-* [Final Report](https://github.com/Jimmy-Nguyen-Data-Science-Portfolio/Water-Potability-Classification/blob/main/Reports/Project%20Report.pdf)
-* [Presentation Slides](https://github.com/Jimmy-Nguyen-Data-Science-Portfolio/Water-Potability-Classification/blob/main/Presentations/Project%20Presentation.pdf)
-* [R-programming Code](https://github.com/Jimmy-Nguyen-Data-Science-Portfolio/Water-Potability-Classification/blob/main/Code/R%20Code/Project%20-%20R%20code.pdf)
-* [Shiny App](https://github.com/Jimmy-Nguyen-Data-Science-Portfolio/Water-Potability-Classification/tree/main/Code/Shiny%20App)
+* [Final Report](https://github.com/Jimmy-Nguyen-Data-Science/Water-Potability-Classification/blob/main/Reports/Project%20Report.pdf)
+* [Presentation Slides](https://github.com/Jimmy-Nguyen-Data-Science/Water-Potability-Classification/blob/main/Presentations/Project%20Presentation.pdf)
+* [R-programming Code](https://github.com/Jimmy-Nguyen-Data-Science/Water-Potability-Classification/blob/main/Code/R%20Code/Project%20-%20R%20code.pdf)
+* [Shiny App](https://github.com/Jimmy-Nguyen-Data-Science/Water-Potability-Classification/tree/main/Code/Shiny%20App)
 
 
 **Shiny Web App Demo - New Data Predictions**
-![Shiny App Demo](https://github.com/Jimmy-Nguyen-Data-Science-Portfolio/Water-Potability-Classification/blob/main/Code/Shiny%20App/Demo.png)
+![Shiny App Demo](https://github.com/Jimmy-Nguyen-Data-Science/Water-Potability-Classification/blob/main/Code/Shiny%20App/Demo.png)
 
 ## Data Visualizations
-![Class Distribution](https://github.com/Jimmy-Nguyen-Data-Science-Portfolio/Water-Potability-Classification/blob/main/Data%20Visuals/Class%20Distributions.png)
+![Class Distribution](https://github.com/Jimmy-Nguyen-Data-Science/Water-Potability-Classification/blob/main/Data%20Visuals/Class%20Distributions.png)
 
-![Correlation Matrix of Predictors](https://github.com/Jimmy-Nguyen-Data-Science-Portfolio/Water-Potability-Classification/blob/main/Data%20Visuals/Correlation%20Matrix%20of%20Predictors.png)
+![Correlation Matrix of Predictors](https://github.com/Jimmy-Nguyen-Data-Science/Water-Potability-Classification/blob/main/Data%20Visuals/Correlation%20Matrix%20of%20Predictors.png)
 
 ## Performance Results
 
-![ROC-AUC Curve of All Models](https://github.com/Jimmy-Nguyen-Data-Science-Portfolio/Water-Potability-Classification/blob/main/Data%20Visuals/ROC-AUC%20Curves%20for%20all%20Models.png)
+![ROC-AUC Curve of All Models](https://github.com/Jimmy-Nguyen-Data-Science/Water-Potability-Classification/blob/main/Data%20Visuals/ROC-AUC%20Curves%20for%20all%20Models.png)
 
-![Average ROC-AUC Values](https://github.com/Jimmy-Nguyen-Data-Science-Portfolio/Water-Potability-Classification/blob/main/Data%20Visuals/Average%20ROC%20values.png)
+![Average ROC-AUC Values](https://github.com/Jimmy-Nguyen-Data-Science/Water-Potability-Classification/blob/main/Data%20Visuals/Average%20ROC%20values.png)
 
-![Final Selected Models Test Performance](https://github.com/Jimmy-Nguyen-Data-Science-Portfolio/Water-Potability-Classification/blob/main/Data%20Visuals/Final%20Model%20Test%20Performance.png)
+![Final Selected Models Test Performance](https://github.com/Jimmy-Nguyen-Data-Science/Water-Potability-Classification/blob/main/Data%20Visuals/Final%20Model%20Test%20Performance.png)
 
 
 ## Original Data 
